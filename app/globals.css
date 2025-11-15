@@ -1,0 +1,90 @@
+@import 'tailwindcss';
+
+@theme inline {
+  /* Professional light theme for business applications */
+  /* Colors optimized for readability and trust */
+  
+  /* Neutral colors - light theme */
+  --color-background: #ffffff;
+  --color-foreground: #0a0a0a;
+  --color-card: #fafafa;
+  --color-card-foreground: #0a0a0a;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0a0a0a;
+  
+  /* Primary accent - blue for trust and professionalism */
+  --color-primary: #0070f3;
+  --color-primary-foreground: #ffffff;
+  
+  /* Secondary accent - light gray */
+  --color-secondary: #f5f5f5;
+  --color-secondary-foreground: #0a0a0a;
+  
+  /* Muted elements */
+  --color-muted: #f5f5f5;
+  --color-muted-foreground: #666666;
+  
+  /* Accent for highlights */
+  --color-accent: #f5f5f5;
+  --color-accent-foreground: #0a0a0a;
+  
+  /* Destructive/error states */
+  --color-destructive: #e5484d;
+  --color-destructive-foreground: #ffffff;
+  
+  /* Success state - green for approvals and positive actions */
+  --color-success: #46a758;
+  --color-success-foreground: #ffffff;
+  
+  /* Warning state - amber for caution */
+  --color-warning: #f5a524;
+  --color-warning-foreground: #000000;
+  
+  /* Border colors */
+  --color-border: #e5e5e5;
+  --color-input: #e5e5e5;
+  --color-ring: #0070f3;
+  
+  /* Chart colors for fuel visualizations */
+  --color-chart-1: #0070f3;
+  --color-chart-2: #7928ca;
+  --color-chart-3: #ff0080;
+  --color-chart-4: #f5a524;
+  --color-chart-5: #46a758;
+  
+  /* Border radius */
+  --radius: 0.5rem;
+  
+  /* Fonts */
+  --font-sans: 'Geist', 'Geist Fallback', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', 'Courier New', monospace;
+}
+
+* {
+  border-color: theme('colors.border');
+}
+
+body {
+  background-color: theme('colors.background');
+  color: theme('colors.foreground');
+  font-feature-settings: 'rlig' 1, 'calt' 1;
+}
+
+/* Scrollbar styling for light theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}

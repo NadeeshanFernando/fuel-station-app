@@ -1,0 +1,231 @@
+// Prisma schema for Fuel Station Management System
+// This file defines all database models for users, fuel management, pumps, shifts, and stock tracking
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles enum
+enum UserRole {
+  ADMIN    // Owner/Manager with full access
+  CASHIER  // Sub-admin who manages shifts and handovers
+}
+
+// Pump shift status workflow
+enum ShiftStatus {
+  OPEN              // Shift is currently active
+  PENDING_APPROVAL  // Shift closed, awaiting admin approval
+  APPROVED          // Shift approved by admin
+  REJECTED          // Shift rejected by admin
+}
+
+// User model - represents system users (Admin and Cashier)
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique
+  passwordHash String   // bcrypt hashed password
+  role         UserRole
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  pumpShifts    PumpShift[]    // Shifts created by this cashier
+
+  @@index([username])
+  @@index([role, isActive])
+}
+
+// FuelType model - defines types of fuel available (e.g., Petrol 92, Diesel)
+model FuelType {
+  id             String   @id @default(cuid())
+  name           String   @unique // e.g., "Petrol 92", "Auto Diesel"
+  color          String   @default("#3b82f6") // Color for visualization
+  tankCapacity   Decimal  @default(10000) @db.Decimal(10, 2) // Added tank capacity in liters
+  minStockAlert  Decimal  @default(1000) @db.Decimal(10, 2) // Added minimum stock alert level
+  currentStock   Decimal  @default(0) @db.Decimal(10, 2) // Added current stock tracking
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  priceHistory   FuelPriceHistory[]
+  pumps          Pump[]
+  pumpShifts     PumpShift[]
+  fuelDeliveries FuelDelivery[]
+  dailyStock     FuelDailyStock[]
+
+  @@index([isActive])
+}
+
+// FuelPriceHistory model - tracks price changes over time
+model FuelPriceHistory {
+  id             String    @id @default(cuid())
+  fuelTypeId     String
+  pricePerLiter  Decimal   @db.Decimal(10, 2) // Price per liter
+  effectiveFrom  DateTime  @default(now())
+  effectiveTo    DateTime? // null means current price
+  createdAt      DateTime  @default(now())
+
+  // Relations
+  fuelType FuelType @relation(fields: [fuelTypeId], references: [id], onDelete: Cascade)
+
+  @@index([fuelTypeId, effectiveFrom])
+}
+
+// Pump model - physical fuel pumps at the station
+model Pump {
+  id         String   @id @default(cuid())
+  name       String   @unique // e.g., "Pump 1", "Pump 2"
+  fuelTypeId String   // Type of fuel this pump dispenses
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  fuelType   FuelType    @relation(fields: [fuelTypeId], references: [id])
+  pumpShifts PumpShift[]
+
+  @@index([fuelTypeId, isActive])
+}
+
+// FuelDelivery model - tracks fuel deliveries from suppliers
+model FuelDelivery {
+  id              String   @id @default(cuid())
+  fuelTypeId      String
+  date            DateTime @db.Date
+  quantityLiters  Decimal  @db.Decimal(10, 2)
+  invoiceNumber   String?
+  remarks         String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  fuelType FuelType @relation(fields: [fuelTypeId], references: [id])
+
+  @@index([fuelTypeId, date])
+}
+
+// FuelDailyStock model - daily stock tracking for each fuel type
+model FuelDailyStock {
+  id                         String   @id @default(cuid())
+  date                       DateTime @db.Date
+  fuelTypeId                 String
+  openingStockLiters         Decimal  @db.Decimal(10, 2)
+  closingPhysicalStockLiters Decimal? @db.Decimal(10, 2) // Physical measurement
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  // Relations
+  fuelType FuelType @relation(fields: [fuelTypeId], references: [id])
+
+  // Ensure one record per fuel type per day
+  @@unique([date, fuelTypeId])
+  @@index([date, fuelTypeId])
+}
+
+// InterimHandover model for mid-shift collections
+model InterimHandover {
+  id           String    @id @default(cuid())
+  pumpShiftId  String
+  cashAmount   Decimal   @db.Decimal(10, 2)
+  cardAmount   Decimal   @db.Decimal(10, 2) @default(0)
+  remarks      String?   @db.Text
+  createdAt    DateTime  @default(now())
+
+  // Relations
+  pumpShift PumpShift @relation(fields: [pumpShiftId], references: [id], onDelete: Cascade)
+
+  @@index([pumpShiftId, createdAt])
+}
+
+// Employee model - all employees including attendants and other staff
+model Employee {
+  id            String   @id @default(cuid())
+  name          String
+  position      String   // e.g., "Pump Attendant", "Cashier", "Supervisor"
+  phoneNumber   String?
+  address       String?  @db.Text
+  joinDate      DateTime @default(now())
+  basicSalary   Decimal  @db.Decimal(10, 2)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  salaryRecords SalaryRecord[] // Salary records for this employee
+
+  @@index([isActive])
+  @@index([position])
+}
+
+// PumpShift model - represents a work shift for a pump with an attendant
+// This is the core model for daily operations and handovers
+model PumpShift {
+  id              String       @id @default(cuid())
+  pumpId          String
+  fuelTypeId      String
+  cashierId       String       // Cashier who created this shift
+  attendantName   String       // Name of pump attendant (not a system user)
+  
+  // Meter readings
+  openingReading  Decimal      @db.Decimal(10, 2) // Meter reading at shift start
+  closingReading  Decimal?     @db.Decimal(10, 2) // Meter reading at shift end
+  litersSold      Decimal?     @db.Decimal(10, 2) // Calculated: closing - opening
+  
+  // Financial details
+  pricePerLiter   Decimal      @db.Decimal(10, 2) // Price snapshot at shift start
+  expectedAmount  Decimal?     @db.Decimal(10, 2) // litersSold * pricePerLiter
+  cashAmount      Decimal?     @db.Decimal(10, 2) // Actual cash collected
+  cardAmount      Decimal?     @db.Decimal(10, 2) // Actual card payments
+  creditAmount    Decimal?     @db.Decimal(10, 2) // Credit sales (optional)
+  difference      Decimal?     @db.Decimal(10, 2) // Short/excess: expected - (cash + card + credit)
+  
+  // Status and timestamps
+  status          ShiftStatus  @default(OPEN)
+  startTime       DateTime     @default(now())
+  endTime         DateTime?
+  remarks         String?      @db.Text
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  pump            Pump              @relation(fields: [pumpId], references: [id])
+  fuelType        FuelType          @relation(fields: [fuelTypeId], references: [id])
+  cashier         User              @relation(fields: [cashierId], references: [id])
+  interimHandovers InterimHandover[] // Added relation
+
+  @@index([pumpId, startTime])
+  @@index([cashierId, status])
+  @@index([status, startTime])
+}
+
+// SalaryRecord model - tracks monthly salary calculations with deductions
+model SalaryRecord {
+  id               String   @id @default(cuid())
+  employeeId       String   // Now references Employee instead of User
+  month            Int      // 1-12
+  year             Int
+  basicSalary      Decimal  @db.Decimal(10, 2)
+  totalSalary      Decimal  @db.Decimal(10, 2) // Total before deductions
+  fullDayLeaves    Int      @default(0)
+  halfDayLeaves    Int      @default(0)
+  loanAmount       Decimal  @default(0) @db.Decimal(10, 2)
+  totalDeductions  Decimal  @db.Decimal(10, 2) // Calculated deductions
+  netSalary        Decimal  @db.Decimal(10, 2) // Final salary after deductions
+  remarks          String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade) // Updated relation
+
+  @@unique([employeeId, month, year])
+  @@index([employeeId, year, month])
+}
