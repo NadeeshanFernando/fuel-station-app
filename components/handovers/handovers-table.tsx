@@ -26,8 +26,8 @@ import {
 
 interface Shift {
   id: string
-  startTime: Date
-  endTime: Date | null
+  startTime: string
+  endTime: string | null
   status: string
   attendantName: string
   openingReading: number

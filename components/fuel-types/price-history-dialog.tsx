@@ -10,18 +10,18 @@ import {
 } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 
-interface FuelType {
+interface FuelTypeWithHistory {
   name: string
   priceHistory: Array<{
     id: string
-    pricePerLiter: any
-    effectiveFrom: Date
-    effectiveTo: Date | null
+    pricePerLiter: number
+    effectiveFrom: string
+    effectiveTo: string | null
   }>
 }
 
 interface PriceHistoryDialogProps {
-  fuelType: FuelType
+  fuelType: FuelTypeWithHistory
   open: boolean
   onOpenChange: (open: boolean) => void
 }

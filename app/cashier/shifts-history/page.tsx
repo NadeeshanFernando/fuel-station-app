@@ -13,7 +13,7 @@ export default async function ShiftsHistoryPage() {
   }
 
   // Get all shifts for this cashier
-  const shifts = await prisma.pumpShift.findMany({
+  const shiftsRaw = await prisma.pumpShift.findMany({
     where: {
       cashierId: session.userId,
     },
@@ -26,6 +26,30 @@ export default async function ShiftsHistoryPage() {
     },
     take: 50,
   })
+
+  const shifts = shiftsRaw.map((shift) => ({
+    id: shift.id,
+    startTime: shift.startTime.toISOString(),
+    endTime: shift.endTime ? shift.endTime.toISOString() : null,
+    status: shift.status,
+    attendantName: shift.attendantName,
+    openingReading: Number(shift.openingReading ?? 0),
+    closingReading: shift.closingReading != null ? Number(shift.closingReading) : null,
+    litersSold: shift.litersSold != null ? Number(shift.litersSold) : null,
+    pricePerLiter: Number(shift.pricePerLiter),
+    expectedAmount: shift.expectedAmount != null ? Number(shift.expectedAmount) : null,
+    cashAmount: shift.cashAmount != null ? Number(shift.cashAmount) : null,
+    cardAmount: shift.cardAmount != null ? Number(shift.cardAmount) : null,
+    creditAmount: shift.creditAmount != null ? Number(shift.creditAmount) : null,
+    difference: shift.difference != null ? Number(shift.difference) : null,
+    remarks: shift.remarks,
+    pump: {
+      name: shift.pump.name,
+    },
+    fuelType: {
+      name: shift.fuelType.name,
+    },
+  }))
 
   return (
     <div className="space-y-6">

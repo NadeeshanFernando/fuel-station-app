@@ -13,8 +13,8 @@ import { useState } from 'react'
 
 interface Shift {
   id: string
-  startTime: Date
-  endTime: Date | null
+  startTime: string | Date
+  endTime: string | Date | null
   status: string
   attendantName: string
   openingReading: any

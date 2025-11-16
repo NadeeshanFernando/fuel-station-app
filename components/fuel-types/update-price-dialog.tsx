@@ -15,17 +15,17 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 
-interface FuelType {
+interface FuelTypeWithPriceHistory {
   id: string
   name: string
   priceHistory: Array<{
-    pricePerLiter: any
-    effectiveTo: Date | null
+    pricePerLiter: number
+    effectiveTo: string | null
   }>
 }
 
 interface UpdatePriceDialogProps {
-  fuelType: FuelType
+  fuelType: FuelTypeWithPriceHistory
   open: boolean
   onOpenChange: (open: boolean) => void
 }

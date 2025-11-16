@@ -16,6 +16,24 @@ export default async function FuelTypesPage() {
     },
   })
 
+  const serializedFuelTypes = fuelTypes.map((fuelType) => ({
+    id: fuelType.id,
+    name: fuelType.name,
+    color: fuelType.color,
+    isActive: fuelType.isActive,
+    tankCapacity: Number(fuelType.tankCapacity),
+    minStockAlert: Number(fuelType.minStockAlert),
+    currentStock: Number(fuelType.currentStock),
+    createdAt: fuelType.createdAt.toISOString(),
+    updatedAt: fuelType.updatedAt.toISOString(),
+    priceHistory: fuelType.priceHistory.map((price) => ({
+      id: price.id,
+      pricePerLiter: Number(price.pricePerLiter),
+      effectiveFrom: price.effectiveFrom.toISOString(),
+      effectiveTo: price.effectiveTo ? price.effectiveTo.toISOString() : null,
+    })),
+  }))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -32,7 +50,7 @@ export default async function FuelTypesPage() {
           <CardDescription>Manage fuel types and update prices</CardDescription>
         </CardHeader>
         <CardContent>
-          <FuelTypesTable fuelTypes={fuelTypes} />
+          <FuelTypesTable fuelTypes={serializedFuelTypes} />
         </CardContent>
       </Card>
     </div>

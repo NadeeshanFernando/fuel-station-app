@@ -5,7 +5,7 @@ import { StartShiftForm } from '@/components/shifts/start-shift-form'
 
 export default async function StartShiftPage() {
   // Get active pumps with current prices
-  const pumps = await prisma.pump.findMany({
+  const pumpsRaw = await prisma.pump.findMany({
     where: { isActive: true },
     include: {
       fuelType: {
@@ -21,6 +21,18 @@ export default async function StartShiftPage() {
       name: 'asc',
     },
   })
+
+  const pumps = pumpsRaw.map((pump) => ({
+    id: pump.id,
+    name: pump.name,
+    fuelType: {
+      id: pump.fuelType.id,
+      name: pump.fuelType.name,
+      priceHistory: pump.fuelType.priceHistory.map((price) => ({
+        pricePerLiter: Number(price.pricePerLiter),
+      })),
+    },
+  }))
 
   return (
     <div className="space-y-6">

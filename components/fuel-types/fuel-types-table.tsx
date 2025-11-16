@@ -9,28 +9,28 @@ import { PriceHistoryDialog } from './price-history-dialog'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 
-interface FuelType {
+interface FuelTypeWithHistory {
   id: string
   name: string
   color?: string // Added optional color field
   isActive: boolean
   priceHistory: Array<{
     id: string
-    pricePerLiter: any
-    effectiveFrom: Date
-    effectiveTo: Date | null
+    pricePerLiter: number
+    effectiveFrom: string
+    effectiveTo: string | null
   }>
 }
 
 interface FuelTypesTableProps {
-  fuelTypes: FuelType[]
+  fuelTypes: FuelTypeWithHistory[]
 }
 
 export function FuelTypesTable({ fuelTypes }: FuelTypesTableProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [updatingPrice, setUpdatingPrice] = useState<FuelType | null>(null)
-  const [viewingHistory, setViewingHistory] = useState<FuelType | null>(null)
+  const [updatingPrice, setUpdatingPrice] = useState<FuelTypeWithHistory | null>(null)
+  const [viewingHistory, setViewingHistory] = useState<FuelTypeWithHistory | null>(null)
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
